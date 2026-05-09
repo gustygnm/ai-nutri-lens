@@ -72,7 +72,7 @@ export const setAppLanguage = (lang: AppLanguage): void => {
 };
 
 export const getDefaultScanMode = (): ScanMode => {
-  return (localStorage.getItem(MODE_KEY) as ScanMode) || ScanMode.NORMAL;
+  return (localStorage.getItem(MODE_KEY) as ScanMode) || ScanMode.Normal;
 };
 
 export const setDefaultScanMode = (mode: ScanMode): void => {
