@@ -1,0 +1,7 @@
+{
+  "name": "Nutri Lens",
+  "description": "AI-Powered Nutrition Label Scanner and Grader",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
