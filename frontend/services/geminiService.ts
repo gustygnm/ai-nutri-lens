@@ -78,7 +78,7 @@ export const analyzeNutritionLabel = async (base64Image: string, mimeType: strin
 
     Based on the extracted values AND the specific requirements of the ${mode.toUpperCase()} MODE, calculate a Nutri-Grade (A, B, C, or D) where A is the healthiest and D is the least healthy FOR THIS SPECIFIC MODE. 
     
-    Provide a detailed reasoning (2-3 sentences) explaining WHY it got this grade for this specific user condition.
+    Provide a CONCISE reasoning (MAXIMUM 2 sentences) explaining WHY it got this grade for this specific user condition. DO NOT repeat the exact numbers (like "9g of sugar") in the reasoning, just explain the impact.
     Provide a short recommendation (1 sentence) on how to consume it (e.g., "Avoid during pregnancy", "Safe for daily consumption", "Limit to once a week").
     Provide both reasoning and recommendation in English and Indonesian.
   `;
@@ -104,7 +104,7 @@ export const analyzeNutritionLabel = async (base64Image: string, mimeType: strin
           ],
         },
         config: {
-          systemInstruction: 'You are an expert nutritionist. Your task is to analyze an image of a nutrition facts label and extract specific information, evaluating it based on specific user health conditions.',
+          systemInstruction: 'You are an expert nutritionist. Your task is to analyze an image of a nutrition facts label and extract specific information, evaluating it based on specific user health conditions. Keep your reasoning concise and avoid repeating data points.',
           responseMimeType: 'application/json',
           responseSchema: {
             type: Type.OBJECT,
@@ -127,8 +127,8 @@ export const analyzeNutritionLabel = async (base64Image: string, mimeType: strin
               reasoning: { 
                 type: Type.OBJECT, 
                 properties: {
-                  en: { type: Type.STRING, description: "Detailed reasoning tailored to the selected mode in English" },
-                  id: { type: Type.STRING, description: "Detailed reasoning tailored to the selected mode in Indonesian" }
+                  en: { type: Type.STRING, description: "Concise reasoning tailored to the selected mode in English" },
+                  id: { type: Type.STRING, description: "Concise reasoning tailored to the selected mode in Indonesian" }
                 },
                 required: ["en", "id"]
               },
