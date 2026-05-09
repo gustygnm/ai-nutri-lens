@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   Upload, Camera, Loader2, AlertCircle, Activity, Scale, Droplet, 
   Baby, HeartHandshake, Smile, HeartPulse, Dumbbell, ChevronDown,
-  Target, Zap, Brain, ShieldCheck, MessageCircle, Plus
+  Target, Zap, Brain, ShieldCheck, MessageCircle, Plus, Minus, X
 } from 'lucide-react';
 import { analyzeNutritionLabel } from '../services/geminiService.ts';
 import { getDefaultScanMode } from '../services/storageService.ts';
@@ -33,18 +33,22 @@ export const getModeIcon = (mode: ScanMode, size = 16) => {
 const FaqItem = ({ question, answer }: { question: string, answer: string }) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden transition-all duration-300">
+    <div className="bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-[2rem] mb-4 overflow-hidden transition-all duration-300">
       <button 
         onClick={() => setIsOpen(!isOpen)} 
-        className="w-full p-5 flex justify-between items-center text-left"
+        className="w-full px-6 py-5 flex justify-between items-center text-left"
       >
         <span className="font-bold text-gray-900 dark:text-white text-sm md:text-base pr-4 leading-relaxed">{question}</span>
-        <div className="w-8 h-8 rounded-full border border-gray-200 dark:border-gray-600 flex items-center justify-center shrink-0 bg-transparent">
-          <ChevronDown size={16} className={`text-gray-500 dark:text-gray-400 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+        <div className={`w-10 h-10 rounded-full border border-gray-200 dark:border-gray-600 flex items-center justify-center shrink-0 transition-colors duration-300 ${isOpen ? 'bg-gray-100 dark:bg-gray-700' : 'bg-transparent'}`}>
+          {isOpen ? (
+            <Minus size={18} className="text-gray-600 dark:text-gray-300" />
+          ) : (
+            <Plus size={18} className="text-gray-600 dark:text-gray-300" />
+          )}
         </div>
       </button>
       <div 
-        className={`px-5 text-sm text-gray-600 dark:text-gray-400 transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? 'max-h-40 pb-5 opacity-100' : 'max-h-0 opacity-0'}`}
+        className={`px-6 text-sm text-gray-600 dark:text-gray-400 transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? 'max-h-40 pb-6 opacity-100' : 'max-h-0 opacity-0'}`}
       >
         <p className="leading-relaxed">{answer}</p>
       </div>
@@ -212,7 +216,7 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete, t, language })
           {!image ? (
             <label 
               htmlFor="camera-input"
-              className="w-full aspect-[4/5] border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-[2rem] flex flex-col items-center justify-center bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors cursor-pointer shadow-sm"
+              className="w-full aspect-[4/5] border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-[2.5rem] flex flex-col items-center justify-center bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors cursor-pointer shadow-sm"
             >
               <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mb-4">
                 <Camera size={32} />
@@ -221,28 +225,34 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete, t, language })
               <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">{t('upload_gallery')}</p>
             </label>
           ) : (
-            <div className="w-full flex flex-col items-center">
-              <div className="relative w-full aspect-[4/5] rounded-[2rem] overflow-hidden shadow-lg mb-6 bg-black shrink-0">
-                <img src={image} alt="Preview" className="w-full h-full object-cover opacity-80" />
+            <div className="w-full flex flex-col items-center animate-[slideUp_0.3s_ease-out]">
+              <div className="relative w-full aspect-[4/5] rounded-[2.5rem] overflow-hidden shadow-2xl mb-6 bg-gray-100 dark:bg-gray-800 shrink-0 border-4 border-white dark:border-gray-800">
+                <img src={image} alt="Preview" className="w-full h-full object-cover" />
+                
+                {/* Subtle gradient overlay at the bottom for a premium look */}
+                <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/60 to-transparent pointer-events-none"></div>
                 
                 {!isAnalyzing && (
                   <button 
                     onClick={reset}
-                    className="absolute top-4 right-4 bg-black/50 text-white p-2 rounded-full backdrop-blur-sm hover:bg-black/70 z-10"
+                    className="absolute top-4 right-4 bg-black/40 text-white p-2.5 rounded-full backdrop-blur-md hover:bg-black/60 transition-all z-10 border border-white/20 shadow-lg"
                   >
-                    ✕
+                    <X size={20} />
                   </button>
                 )}
                 
                 {isAnalyzing && (
-                  <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center text-white z-20">
-                    <Loader2 size={56} className="animate-spin mb-6 text-green-400" />
-                    <p className="text-xl font-medium animate-pulse mb-2">{t('analyzing')}</p>
-                    <p className="text-sm opacity-70 mb-8">{t('ai_processing')}</p>
+                  <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center text-white z-20">
+                    <div className="relative mb-6">
+                      <div className="absolute inset-0 border-4 border-green-500/30 rounded-full animate-ping"></div>
+                      <Loader2 size={64} className="animate-spin text-green-400 relative z-10" />
+                    </div>
+                    <p className="text-2xl font-bold animate-pulse mb-2">{t('analyzing')}</p>
+                    <p className="text-sm opacity-70 mb-8 font-medium tracking-wide uppercase">{t('ai_processing')}</p>
                     
-                    <div className="absolute bottom-8 flex items-center gap-2 bg-black/50 px-4 py-2 rounded-full backdrop-blur-md border border-white/10">
-                      {getModeIcon(currentMode, 16)}
-                      <span className="text-sm font-medium">{t(`mode_${currentMode}` as TranslationKey)}</span>
+                    <div className="absolute bottom-8 flex items-center gap-2 bg-white/10 px-5 py-2.5 rounded-full backdrop-blur-md border border-white/20">
+                      {getModeIcon(currentMode, 18)}
+                      <span className="text-sm font-bold tracking-wide">{t(`mode_${currentMode}` as TranslationKey).toUpperCase()}</span>
                     </div>
                   </div>
                 )}
@@ -251,10 +261,11 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete, t, language })
               {!isAnalyzing && (
                 <button
                   onClick={handleAnalyze}
-                  className="w-full py-4 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-bold text-lg shadow-lg shadow-green-600/30 transition-transform active:scale-95 flex items-center justify-center gap-2 shrink-0"
+                  className="w-full py-4.5 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-2xl font-bold text-lg shadow-[0_8px_25px_rgba(34,197,94,0.4)] transition-all active:scale-[0.98] flex items-center justify-center gap-3 shrink-0 border border-green-400/20"
+                  style={{ padding: '1.125rem' }}
                 >
-                  <Activity size={24} />
-                  {t('analyze_btn')}
+                  <Activity size={24} className="animate-pulse" />
+                  <span>{t('analyze_btn')}</span>
                 </button>
               )}
             </div>
@@ -380,6 +391,13 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete, t, language })
 
         </div>
       )}
+      
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes slideUp {
+          from { transform: translateY(20px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+      `}} />
     </div>
   );
 };
