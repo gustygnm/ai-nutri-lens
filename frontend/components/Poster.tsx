@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { ScanResult, PosterTheme, NutriGrade, AppLanguage, BilingualText, ScanMode } from '../types.ts';
-import { Share2, Download, Droplets, Flame, Activity, Wheat, Pencil, Check, X, ArrowLeft, Loader2, Image as ImageIcon, Type, Info, ThumbsUp } from 'lucide-react';
+import { Share2, Download, Droplets, Flame, Activity, Wheat, Pencil, Check, X, ArrowLeft, Loader2, Image as ImageIcon, Type, Info, ThumbsUp, Trash2 } from 'lucide-react';
 import { TranslationKey } from '../utils/i18n.ts';
 import { toBlob } from 'html-to-image';
-import { modeIcons } from './Scanner.tsx';
+import { getModeIcon } from './Scanner.tsx';
 
 interface PosterProps {
   result: ScanResult;
@@ -11,21 +11,21 @@ interface PosterProps {
   onThemeChange: (theme: PosterTheme) => void;
   onClose: () => void;
   onUpdateResult: (result: ScanResult) => void;
+  onDeleteResult: (id: string) => void;
   t: (key: TranslationKey) => string;
   language: AppLanguage;
 }
 
 const themeStyles: Record<PosterTheme, string> = {
-  [PosterTheme.Midnight]: 'bg-slate-900 text-white border-slate-700',
+  [PosterTheme.Midnight]: 'bg-[#111827] text-white border-slate-800',
   [PosterTheme.Cyber]: 'bg-black text-green-400 font-mono border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.3)]',
   [PosterTheme.Cream]: 'bg-[#fdfbf7] text-stone-800 border-stone-200',
   [PosterTheme.Lavender]: 'bg-purple-50 text-purple-900 border-purple-200',
 };
 
-const getLocalizedText = (text: BilingualText | string | undefined, lang: AppLanguage): string => {
-  if (!text) return '';
+const getLocalizedText = (text: BilingualText | string, lang: AppLanguage): string => {
   if (typeof text === 'string') return text;
-  if (typeof text === 'object') return text[lang] || text.en || '';
+  if (text && typeof text === 'object') return text[lang] || text.en || '';
   return '';
 };
 
@@ -52,13 +52,13 @@ const NutriGradeGraphic: React.FC<{ grade: NutriGrade }> = ({ grade }) => {
   };
 
   return (
-    <div className="inline-flex flex-col bg-white rounded-2xl border-[3px] border-gray-900 p-3 shadow-lg my-4">
-      <div className="font-black text-gray-900 text-sm tracking-widest mb-2 ml-1 leading-none">NUTRI-GRADE</div>
-      <div className="flex items-center relative h-12 mt-1">
+    <div className="bg-white rounded-2xl p-4 shadow-sm w-full max-w-[280px] mx-auto my-4">
+      <div className="font-black text-gray-900 text-xs tracking-widest mb-3">NUTRI-GRADE</div>
+      <div className="flex items-center relative h-10">
         {/* The continuous colored bar */}
-        <div className="flex h-full rounded-lg overflow-hidden border border-gray-900/10 w-full">
+        <div className="flex h-full rounded-lg overflow-hidden w-full">
           {grades.map((g) => (
-            <div key={`bg-${g}`} className={`w-14 h-full ${bgColors[g]}`}></div>
+            <div key={`bg-${g}`} className={`flex-1 h-full ${bgColors[g]}`}></div>
           ))}
         </div>
 
@@ -67,13 +67,13 @@ const NutriGradeGraphic: React.FC<{ grade: NutriGrade }> = ({ grade }) => {
           {grades.map((g) => {
             const isActive = grade === g;
             return (
-              <div key={`fg-${g}`} className="w-14 h-full flex items-center justify-center relative">
+              <div key={`fg-${g}`} className="flex-1 h-full flex items-center justify-center relative">
                 {isActive ? (
-                  <div className={`absolute w-16 h-16 rounded-full border-[4px] border-white flex items-center justify-center text-white font-black text-3xl z-10 shadow-md ${bgColors[g]}`} style={{ top: '50%', transform: 'translateY(-50%)' }}>
+                  <div className={`absolute w-14 h-14 rounded-full border-[4px] border-white flex items-center justify-center text-white font-black text-2xl z-10 shadow-md ${bgColors[g]}`} style={{ top: '50%', transform: 'translateY(-50%)' }}>
                     {g}
                   </div>
                 ) : (
-                  <span className="text-white font-bold text-xl opacity-90 drop-shadow-sm">{g}</span>
+                  <span className="text-white font-bold text-lg opacity-90 drop-shadow-sm">{g}</span>
                 )}
               </div>
             );
@@ -84,26 +84,18 @@ const NutriGradeGraphic: React.FC<{ grade: NutriGrade }> = ({ grade }) => {
   );
 };
 
-export const Poster: React.FC<PosterProps> = ({ result, theme, onThemeChange, onClose, onUpdateResult, t, language }) => {
-  const [isEditing, setIsEditing] = useState(false);
+export const Poster: React.FC<PosterProps> = ({ result, theme, onThemeChange, onClose, onUpdateResult, onDeleteResult, t, language }) => {
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editValue, setEditValue] = useState('');
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
-  const editInputRef = useRef<HTMLInputElement>(null);
   
   const localizedProductName = getLocalizedText(result.productName, language);
   const localizedReasoning = getLocalizedText(result.reasoning, language);
-  const localizedWhy = getLocalizedText(result.whyThisGrade, language);
-  const localizedRec = getLocalizedText(result.recommendation, language);
-  const itemMode = result.mode || ScanMode.NORMAL;
-  
-  const shareTextContent = `${t('app_title')}: ${localizedProductName}\n${t('share_grade')}${result.grade} (${t(`mode_${itemMode}` as TranslationKey)})\n\n${localizedReasoning}\n\n${t('recommendation_for_you')}: ${localizedRec}`;
-
-  useEffect(() => {
-    if (isEditing && editInputRef.current) {
-      editInputRef.current.focus();
-    }
-  }, [isEditing]);
+  const localizedRecommendation = getLocalizedText(result.recommendation || {en: '', id: ''}, language);
+  const itemMode = result.mode || ScanMode.Normal;
+  const shareTextContent = `${t('share_scanned')}${localizedProductName}${t('share_grade')}${result.grade} (${t(`mode_${itemMode}` as TranslationKey)})! ${localizedReasoning}`;
 
   const handleShareImage = async () => {
     const node = document.getElementById('poster-node');
@@ -111,10 +103,9 @@ export const Poster: React.FC<PosterProps> = ({ result, theme, onThemeChange, on
 
     setIsGeneratingImage(true);
     try {
-      // Generate image blob from the DOM node
       const blob = await toBlob(node, {
         quality: 0.95,
-        pixelRatio: 2, // Higher resolution
+        pixelRatio: 2,
         cacheBust: true,
       });
 
@@ -129,11 +120,9 @@ export const Poster: React.FC<PosterProps> = ({ result, theme, onThemeChange, on
         files: [file]
       };
 
-      // Check if the browser supports sharing files
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share(shareData);
       } else {
-        // Fallback: Download the image if sharing files is not supported
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.download = fileName;
@@ -143,7 +132,7 @@ export const Poster: React.FC<PosterProps> = ({ result, theme, onThemeChange, on
       }
     } catch (error) {
       console.error('Error sharing image:', error);
-      alert(t('share_error_image'));
+      alert('Failed to generate image. Try sharing text instead.');
     } finally {
       setIsGeneratingImage(false);
       setIsShareModalOpen(false);
@@ -162,7 +151,6 @@ export const Poster: React.FC<PosterProps> = ({ result, theme, onThemeChange, on
         console.error('Text share failed', e);
       }
     } else {
-      // Fallback to clipboard
       navigator.clipboard.writeText(`${shareTextContent}\n${window.location.href}`);
       alert(t('copied_to_clipboard'));
     }
@@ -171,12 +159,12 @@ export const Poster: React.FC<PosterProps> = ({ result, theme, onThemeChange, on
 
   const handleEditClick = () => {
     setEditValue(localizedProductName);
-    setIsEditing(true);
+    setIsEditModalOpen(true);
   };
 
   const handleSaveEdit = () => {
     if (editValue.trim() === '') {
-      setIsEditing(false);
+      setIsEditModalOpen(false);
       return;
     }
 
@@ -192,11 +180,11 @@ export const Poster: React.FC<PosterProps> = ({ result, theme, onThemeChange, on
     }
 
     onUpdateResult(updatedResult);
-    setIsEditing(false);
+    setIsEditModalOpen(false);
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-100 dark:bg-gray-900 relative">
+    <div className="flex flex-col h-full bg-white dark:bg-gray-900 relative w-full">
       {/* Header */}
       <div className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 shadow-sm z-20 relative">
         <div className="flex items-center gap-3">
@@ -208,17 +196,24 @@ export const Poster: React.FC<PosterProps> = ({ result, theme, onThemeChange, on
           </button>
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t('share_title')}</h2>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
+          <button 
+            onClick={() => setIsDeleteModalOpen(true)}
+            className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full transition-colors"
+            title={t('delete')}
+          >
+            <Trash2 size={20} />
+          </button>
           <button 
             onClick={handleEditClick}
-            className="p-2 bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+            className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
             title={t('edit_name')}
           >
             <Pencil size={20} />
           </button>
           <button 
             onClick={() => setIsShareModalOpen(true)} 
-            className="p-2 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors"
+            className="p-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-full transition-colors"
           >
             <Share2 size={20} />
           </button>
@@ -243,21 +238,22 @@ export const Poster: React.FC<PosterProps> = ({ result, theme, onThemeChange, on
       </div>
 
       {/* Poster Canvas Area */}
-      <div className="flex-1 overflow-y-auto p-4 pb-12 flex flex-col items-center">
+      <div className="flex-1 overflow-y-auto p-4 pb-28 md:pb-12 flex flex-col items-center bg-gray-50 dark:bg-gray-900">
         <div 
           id="poster-node"
-          className={`w-full max-w-md rounded-2xl overflow-hidden border-2 transition-all duration-300 my-auto shrink-0 ${themeStyles[theme]}`}
+          className={`w-full max-w-md rounded-2xl overflow-hidden border transition-all duration-300 my-auto shrink-0 ${themeStyles[theme]}`}
         >
           {/* Image Header */}
-          <div className="relative h-48 w-full bg-gray-200">
+          <div className="relative h-56 w-full bg-gray-200">
             <img 
               src={result.imageUrl} 
               alt={localizedProductName} 
-              className="w-full h-full object-cover opacity-80 mix-blend-multiply"
+              className="w-full h-full object-cover opacity-90 mix-blend-multiply"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+            
             <div className="absolute bottom-4 left-4 right-4">
-              <h3 className="text-2xl font-bold text-white drop-shadow-md truncate">
+              <h3 className="text-2xl font-bold text-white drop-shadow-md line-clamp-2">
                 {localizedProductName}
               </h3>
             </div>
@@ -266,74 +262,66 @@ export const Poster: React.FC<PosterProps> = ({ result, theme, onThemeChange, on
           {/* Content */}
           <div className="p-6 space-y-6">
             
-            <div className="flex flex-col items-center">
-              <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full border border-current/10 mb-2">
-                {React.cloneElement(modeIcons[itemMode] as React.ReactElement, { size: 14 })}
-                <span className="text-xs font-bold uppercase tracking-wider">{t(`mode_${itemMode}` as TranslationKey)}</span>
+            <div className="flex justify-center">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-current opacity-80 text-xs font-medium">
+                {getModeIcon(itemMode, 14)}
+                {t(`mode_${itemMode}` as TranslationKey).toUpperCase()}
               </div>
+            </div>
+
+            <div className="flex justify-center">
               <NutriGradeGraphic grade={result.grade} />
             </div>
 
-            <p className={`text-lg italic opacity-90 text-center font-medium ${theme === PosterTheme.Cyber ? 'text-green-300' : ''}`}>
-              "{localizedReasoning}"
-            </p>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className={`p-3 rounded-xl flex items-center gap-3 ${theme === PosterTheme.Midnight ? 'bg-slate-800' : theme === PosterTheme.Cyber ? 'bg-green-900/30 border border-green-800' : 'bg-black/5'}`}>
-                <Flame className="text-orange-500" size={24} />
-                <div>
-                  <p className="text-xs opacity-70 uppercase tracking-wider">{t('calories')}</p>
-                  <p className="font-bold text-lg">{result.facts?.calories ?? (result as any).calories ?? 0} <span className="text-sm font-normal">kcal</span></p>
-                </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className={`p-3 rounded-xl flex flex-col items-center justify-center text-center gap-1 ${theme === PosterTheme.Midnight ? 'bg-slate-800/80' : theme === PosterTheme.Cyber ? 'bg-green-900/30 border border-green-800' : 'bg-black/5'}`}>
+                <Flame className="text-orange-500 mb-1" size={20} />
+                <p className="text-[10px] opacity-70 uppercase tracking-wider">{t('calories')}</p>
+                <p className="font-bold text-lg leading-none">{result.facts?.calories ?? (result as any).calories ?? 0} <span className="text-xs font-normal">kcal</span></p>
               </div>
-              <div className={`p-3 rounded-xl flex items-center gap-3 ${theme === PosterTheme.Midnight ? 'bg-slate-800' : theme === PosterTheme.Cyber ? 'bg-green-900/30 border border-green-800' : 'bg-black/5'}`}>
-                <Droplets className="text-blue-500" size={24} />
-                <div>
-                  <p className="text-xs opacity-70 uppercase tracking-wider">{t('sugar')}</p>
-                  <p className="font-bold text-lg">{result.facts?.sugar ?? (result as any).sugar ?? 0} <span className="text-sm font-normal">g</span></p>
-                </div>
+              <div className={`p-3 rounded-xl flex flex-col items-center justify-center text-center gap-1 ${theme === PosterTheme.Midnight ? 'bg-slate-800/80' : theme === PosterTheme.Cyber ? 'bg-green-900/30 border border-green-800' : 'bg-black/5'}`}>
+                <Droplets className="text-blue-500 mb-1" size={20} />
+                <p className="text-[10px] opacity-70 uppercase tracking-wider">{t('sugar')}</p>
+                <p className="font-bold text-lg leading-none">{result.facts?.sugar ?? (result as any).sugar ?? 0} <span className="text-xs font-normal">g</span></p>
               </div>
-              <div className={`p-3 rounded-xl flex items-center gap-3 ${theme === PosterTheme.Midnight ? 'bg-slate-800' : theme === PosterTheme.Cyber ? 'bg-green-900/30 border border-green-800' : 'bg-black/5'}`}>
-                <Activity className="text-red-500" size={24} />
-                <div>
-                  <p className="text-xs opacity-70 uppercase tracking-wider">{t('sat_fat')}</p>
-                  <p className="font-bold text-lg">{result.facts?.saturatedFat ?? (result as any).saturatedFat ?? 0} <span className="text-sm font-normal">g</span></p>
-                </div>
+              <div className={`p-3 rounded-xl flex flex-col items-center justify-center text-center gap-1 ${theme === PosterTheme.Midnight ? 'bg-slate-800/80' : theme === PosterTheme.Cyber ? 'bg-green-900/30 border border-green-800' : 'bg-black/5'}`}>
+                <Activity className="text-red-500 mb-1" size={20} />
+                <p className="text-[10px] opacity-70 uppercase tracking-wider">{t('sat_fat')}</p>
+                <p className="font-bold text-lg leading-none">{result.facts?.saturatedFat ?? (result as any).saturatedFat ?? 0} <span className="text-xs font-normal">g</span></p>
               </div>
-              <div className={`p-3 rounded-xl flex items-center gap-3 ${theme === PosterTheme.Midnight ? 'bg-slate-800' : theme === PosterTheme.Cyber ? 'bg-green-900/30 border border-green-800' : 'bg-black/5'}`}>
-                <Wheat className="text-amber-500" size={24} />
-                <div>
-                  <p className="text-xs opacity-70 uppercase tracking-wider">{t('fiber')}</p>
-                  <p className="font-bold text-lg">{result.facts?.fiber ?? (result as any).fiber ?? 0} <span className="text-sm font-normal">g</span></p>
-                </div>
+              <div className={`p-3 rounded-xl flex flex-col items-center justify-center text-center gap-1 ${theme === PosterTheme.Midnight ? 'bg-slate-800/80' : theme === PosterTheme.Cyber ? 'bg-green-900/30 border border-green-800' : 'bg-black/5'}`}>
+                <Wheat className="text-amber-500 mb-1" size={20} />
+                <p className="text-[10px] opacity-70 uppercase tracking-wider">{t('fiber')}</p>
+                <p className="font-bold text-lg leading-none">{result.facts?.fiber ?? (result as any).fiber ?? 0} <span className="text-xs font-normal">g</span></p>
               </div>
             </div>
 
-            {/* Detailed Insights (Only show if available) */}
-            {(localizedWhy || localizedRec) && (
-              <div className="space-y-4 pt-4 border-t border-current/10">
-                {localizedWhy && (
-                  <div className="flex gap-3">
-                    <Info className="shrink-0 mt-0.5 opacity-70" size={18} />
-                    <div>
-                      <h4 className="text-xs font-bold uppercase tracking-wider opacity-70 mb-1">{t('why_this_grade')}</h4>
-                      <p className="text-sm leading-relaxed">{localizedWhy}</p>
-                    </div>
-                  </div>
-                )}
-                {localizedRec && (
-                  <div className="flex gap-3">
-                    <ThumbsUp className="shrink-0 mt-0.5 opacity-70" size={18} />
-                    <div>
-                      <h4 className="text-xs font-bold uppercase tracking-wider opacity-70 mb-1">{t('recommendation_for_you')}</h4>
-                      <p className="text-sm leading-relaxed">{localizedRec}</p>
-                    </div>
-                  </div>
-                )}
+            {/* Detailed Sections */}
+            <div className="space-y-4 pt-4 border-t border-current border-opacity-20">
+              <div>
+                <div className="flex items-center gap-2 mb-2 opacity-70">
+                  <Info size={16} />
+                  <h4 className="text-xs font-bold uppercase tracking-wider">{t('why_this_grade')}</h4>
+                </div>
+                <p className="text-sm opacity-90 leading-relaxed text-justify">
+                  {localizedReasoning}
+                </p>
               </div>
-            )}
+              
+              {localizedRecommendation && (
+                <div>
+                  <div className="flex items-center gap-2 mb-2 opacity-70">
+                    <ThumbsUp size={16} />
+                    <h4 className="text-xs font-bold uppercase tracking-wider">{t('recommendation')}</h4>
+                  </div>
+                  <p className="text-sm opacity-90 leading-relaxed text-justify">
+                    {localizedRecommendation}
+                  </p>
+                </div>
+              )}
+            </div>
 
-            <div className="pt-4 border-t border-current/10 flex justify-between items-center text-xs opacity-50">
+            <div className="pt-4 border-t border-current border-opacity-20 flex justify-between items-center text-[10px] opacity-50">
               <span>{t('scanned_with')}</span>
               <span>{formatDate(result.timestamp, language)}</span>
             </div>
@@ -341,9 +329,89 @@ export const Poster: React.FC<PosterProps> = ({ result, theme, onThemeChange, on
         </div>
       </div>
       
-      <div className="p-4 pb-8 bg-white dark:bg-gray-800 text-center text-sm text-gray-500 dark:text-gray-400 z-20 relative shadow-[0_-4px_15px_rgba(0,0,0,0.05)]">
-        {t('share_text')}
-      </div>
+      {/* Edit Name Modal (Bottom Sheet) */}
+      {isEditModalOpen && (
+        <div className="absolute inset-0 z-50 flex flex-col justify-end">
+          <div 
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+            onClick={() => setIsEditModalOpen(false)}
+          ></div>
+          <div className="bg-white dark:bg-gray-800 rounded-t-3xl p-6 relative z-10 animate-[slideUp_0.3s_ease-out] md:max-w-md md:mx-auto md:w-full md:mb-auto md:mt-24 md:rounded-3xl">
+            <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-6 md:hidden"></div>
+            
+            <div className="flex items-center gap-3 mb-6">
+              <Pencil size={24} className="text-gray-800 dark:text-white" />
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t('edit_name')}</h2>
+            </div>
+
+            <div className="space-y-4">
+              <input
+                type="text"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-2xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 outline-none"
+                placeholder={t('edit_name')}
+                autoFocus
+                onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit()}
+              />
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="flex-1 py-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                >
+                  {t('cancel')}
+                </button>
+                <button
+                  onClick={handleSaveEdit}
+                  className="flex-1 py-4 bg-green-600 text-white font-bold rounded-2xl hover:bg-green-700 transition-colors shadow-lg shadow-green-600/20"
+                >
+                  {t('save')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal (Bottom Sheet) */}
+      {isDeleteModalOpen && (
+        <div className="absolute inset-0 z-50 flex flex-col justify-end">
+          <div 
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+            onClick={() => setIsDeleteModalOpen(false)}
+          ></div>
+          <div className="bg-white dark:bg-gray-800 rounded-t-3xl p-6 relative z-10 animate-[slideUp_0.3s_ease-out] md:max-w-md md:mx-auto md:w-full md:mb-auto md:mt-24 md:rounded-3xl">
+            <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-6 md:hidden"></div>
+            
+            <div className="flex flex-col items-center text-center mb-8">
+              <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mb-4">
+                <Trash2 size={32} />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{t('delete_title')}</h2>
+              <p className="text-gray-500 dark:text-gray-400">{t('delete_desc')}</p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="flex-1 py-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                {t('cancel')}
+              </button>
+              <button
+                onClick={() => {
+                  onDeleteResult(result.id);
+                  setIsDeleteModalOpen(false);
+                }}
+                className="flex-1 py-4 bg-red-600 text-white font-bold rounded-2xl hover:bg-red-700 transition-colors shadow-lg shadow-red-600/20"
+              >
+                {t('delete')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Share Options Modal (Bottom Sheet) */}
       {isShareModalOpen && (
@@ -352,8 +420,8 @@ export const Poster: React.FC<PosterProps> = ({ result, theme, onThemeChange, on
             className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
             onClick={() => setIsShareModalOpen(false)}
           ></div>
-          <div className="bg-white dark:bg-gray-800 rounded-t-3xl p-6 relative z-10 animate-[slideUp_0.3s_ease-out]">
-            <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-6"></div>
+          <div className="bg-white dark:bg-gray-800 rounded-t-3xl p-6 relative z-10 animate-[slideUp_0.3s_ease-out] md:max-w-md md:mx-auto md:w-full md:mb-auto md:mt-24 md:rounded-3xl">
+            <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-6 md:hidden"></div>
             
             <div className="flex items-center gap-3 mb-6">
               <Share2 size={24} className="text-gray-800 dark:text-white" />
@@ -387,51 +455,6 @@ export const Poster: React.FC<PosterProps> = ({ result, theme, onThemeChange, on
                   <p className="text-sm text-gray-500 dark:text-gray-400">{t('share_text_desc')}</p>
                 </div>
               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Name Modal (Bottom Sheet) */}
-      {isEditing && (
-        <div className="absolute inset-0 z-50 flex flex-col justify-end">
-          <div 
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
-            onClick={() => setIsEditing(false)}
-          ></div>
-          <div className="bg-white dark:bg-gray-800 rounded-t-3xl p-6 relative z-10 animate-[slideUp_0.3s_ease-out]">
-            <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-6"></div>
-            
-            <div className="flex items-center gap-3 mb-6">
-              <Pencil size={24} className="text-gray-800 dark:text-white" />
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t('edit_name')}</h2>
-            </div>
-
-            <div className="space-y-4">
-              <input
-                ref={editInputRef}
-                type="text"
-                value={editValue}
-                onChange={(e) => setEditValue(e.target.value)}
-                className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-2xl py-4 px-4 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                placeholder={t('edit_name')}
-                onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit()}
-              />
-              
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setIsEditing(false)}
-                  className="flex-1 py-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                >
-                  {t('cancel')}
-                </button>
-                <button
-                  onClick={handleSaveEdit}
-                  className="flex-1 py-4 bg-green-600 text-white font-bold rounded-2xl hover:bg-green-700 transition-colors shadow-lg shadow-green-600/20"
-                >
-                  Save
-                </button>
-              </div>
             </div>
           </div>
         </div>
