@@ -20,23 +20,56 @@ export const translations = {
     choose_scan_mode: 'Choose Scan Mode',
     current_mode: 'Current Mode',
     
+    // Landing Page Info
+    how_it_works_title: 'How does it work?',
+    how_it_works_subtitle: 'No hassle, just 3 simple steps to understand your food better.',
+    step_1_title: 'Choose Mode',
+    step_1_desc: 'Select a mode that fits your health goals (Diet, Diabetes, etc).',
+    step_2_title: 'Snap Label',
+    step_2_desc: 'Take a clear photo of the nutrition facts on the packaging.',
+    step_3_title: 'Get Insights',
+    step_3_desc: 'Get personalized Nutri-Grade and easy-to-understand recommendations.',
+    
+    features_title: 'Smart Solution for Your Diet',
+    features_subtitle: 'Nutri Lens helps you make healthier decisions instantly.',
+    feat_1_title: 'Personalized Analysis',
+    feat_1_desc: 'Not just general data, we analyze based on your specific health condition.',
+    feat_2_title: 'Accurate AI',
+    feat_2_desc: 'Powered by Google Gemini for precise text extraction and analysis.',
+    feat_3_title: 'Save Time',
+    feat_3_desc: 'No need to manually calculate sugar or calories. Get results in seconds.',
+    feat_4_title: 'Easy to Understand',
+    feat_4_desc: 'Simple A-D grading system with clear, actionable advice.',
+    
+    faq_title: 'Frequently Asked Questions',
+    faq_subtitle: 'Answers to common questions about Nutri Lens.',
+    faq_1_q: 'What is Nutri-Grade?',
+    faq_1_a: 'It is a scoring system from A (Healthiest) to D (Least Healthy) calculated based on the nutritional value and your selected health mode.',
+    faq_2_q: 'Is the analysis accurate?',
+    faq_2_a: 'We use advanced AI to read the label, but always double-check the physical label if you have severe allergies or strict medical conditions.',
+    faq_3_q: 'What is the difference between modes?',
+    faq_3_a: 'Each mode has different strictness. For example, Diabetes mode will heavily penalize high sugar, while Fitness mode focuses on protein.',
+    faq_4_q: 'Is this app free?',
+    faq_4_a: 'Yes, Nutri Lens is completely free to use.',
+    
     // Scan Modes
     mode_normal: 'Normal Mode',
-    mode_normal_desc: 'General health analysis',
-    mode_diet: 'Weight Loss',
-    mode_diet_desc: 'Focus on low calorie & high protein',
+    mode_diet: 'Diet / Weight Loss',
     mode_diabetes: 'Diabetes',
-    mode_diabetes_desc: 'Focus on low sugar & complex carbs',
     mode_pregnancy: 'Pregnancy',
-    mode_pregnancy_desc: 'Safe ingredients for expecting mothers',
     mode_breastfeeding: 'Breastfeeding',
-    mode_breastfeeding_desc: 'Optimal nutrition for nursing',
     mode_kids: 'Kids',
-    mode_kids_desc: 'Low sugar, minimal additives',
     mode_hypertension: 'Hypertension',
-    mode_hypertension_desc: 'Focus on low sodium',
-    mode_fitness: 'Fitness',
-    mode_fitness_desc: 'High protein, recovery friendly',
+    mode_fitness: 'Fitness / Muscle',
+    
+    mode_desc_normal: 'General health guidelines',
+    mode_desc_diet: 'Focus on low calorie & high protein',
+    mode_desc_diabetes: 'Focus on low sugar & complex carbs',
+    mode_desc_pregnancy: 'Safe ingredients & essential nutrients',
+    mode_desc_breastfeeding: 'Sufficient calories & safe ingredients',
+    mode_desc_kids: 'Low sugar & minimal additives',
+    mode_desc_hypertension: 'Strictly low sodium',
+    mode_desc_fitness: 'High protein & recovery friendly',
     
     // History
     history_title: 'History',
@@ -56,8 +89,9 @@ export const translations = {
     delete_desc: 'This action cannot be undone. Are you sure you want to delete this scan from your history?',
     cancel: 'Cancel',
     delete: 'Delete',
+    save: 'Save',
     
-    // Poster / Result
+    // Poster
     share_title: 'Share Result',
     share_text: 'Take a screenshot to share this poster!',
     scanned_with: 'Scanned with Nutri Lens AI',
@@ -74,10 +108,8 @@ export const translations = {
     share_text_only: 'Share Text',
     share_text_desc: 'Share analysis text only',
     copied_to_clipboard: 'Copied to clipboard!',
-    share_error_image: 'Failed to generate image. Try sharing text instead.',
-    share_error_unsupported: 'Sharing is not supported on this device.',
-    why_this_grade: 'Why this grade?',
-    recommendation_for_you: 'Recommendation',
+    why_this_grade: 'WHY THIS GRADE?',
+    recommendation: 'RECOMMENDATION',
     
     // Settings
     settings_title: 'Settings',
@@ -89,17 +121,6 @@ export const translations = {
     default_mode_desc: 'Set your primary health goal.',
     about: 'About',
     about_desc: 'Information about Nutri Lens.',
-    guide: 'User Guide',
-    guide_desc: 'Learn how to use Nutri Lens effectively.',
-    
-    // Guide
-    guide_how_to_use: 'How to Use',
-    guide_step_1: '1. Choose your health goal in the Scan Mode selector.',
-    guide_step_2: '2. Point your camera at a Nutrition Facts label or upload an image.',
-    guide_step_3: '3. Wait for the AI to analyze and read your personalized insights.',
-    guide_what_to_scan: 'What to Scan',
-    guide_what_to_scan_desc: 'Scan the standard Nutrition Facts table found on the back of food packaging. Ensure the text is clear and readable.',
-    guide_modes_explanation: 'Scan Modes Explained',
     
     // Theme Options
     theme_system: 'System (default)',
@@ -117,10 +138,13 @@ export const translations = {
     
     // About
     about_app_name: 'Nutri Lens',
-    about_version: 'Version 2.0.0 (Personalized Edition)',
-    about_description: 'Nutri Lens is an AI-Powered Nutrition Scanner that utilizes the Google Gemini API to analyze nutrition facts labels on food packaging. It provides personalized health insights, Nutri-Grade scoring, and actionable recommendations based on your specific dietary needs and health goals.',
+    about_version: 'Version 2.0.0 (Personal Edition)',
+    about_description: 'Nutri Lens is an AI-Powered Nutrition Scanner that utilizes Google Gemini API to analyze nutrition facts labels on food packaging. This app provides personalized health insights, Nutri-Grade assessments, and actionable recommendations based on your specific dietary needs and health goals.',
     about_tech: 'Powered by Google Gemini & React',
-    developer_info: 'Developer Information',
+    dev_info: 'Developer Information',
+    dev_name: 'Name',
+    dev_email: 'Email',
+    dev_linkedin: 'LinkedIn',
   },
   id: {
     // Navigation
@@ -141,23 +165,56 @@ export const translations = {
     choose_scan_mode: 'Pilih Mode Pindai',
     current_mode: 'Mode Saat Ini',
     
+    // Landing Page Info
+    how_it_works_title: 'Gimana Cara Pakainya?',
+    how_it_works_subtitle: 'Gak perlu ribet, cuma butuh 3 langkah simpel buat ngerti nutrisi makananmu.',
+    step_1_title: 'Pilih Mode',
+    step_1_desc: 'Pilih mode yang sesuai dengan tujuan kesehatanmu (Diet, Diabetes, dll).',
+    step_2_title: 'Foto Label',
+    step_2_desc: 'Ambil foto informasi nilai gizi pada kemasan yang jelas dan terang.',
+    step_3_title: 'Dapatkan Penjelasan',
+    step_3_desc: 'Dapatkan Nutri-Grade personal dan rekomendasi yang mudah dipahami.',
+    
+    features_title: 'Solusi Pintar Buat Diet Kamu',
+    features_subtitle: 'Nutri Lens bantu kamu bikin keputusan sehat dalam hitungan detik.',
+    feat_1_title: 'Analisis Personal',
+    feat_1_desc: 'Bukan cuma data umum, kami analisis berdasarkan kondisi kesehatan spesifikmu.',
+    feat_2_title: 'AI Super Akurat',
+    feat_2_desc: 'Pakai teknologi Google Gemini terbaru buat baca label dengan presisi tinggi.',
+    feat_3_title: 'Hemat Waktu',
+    feat_3_desc: 'Gak perlu hitung gula atau kalori manual. Hasil keluar dalam hitungan detik.',
+    feat_4_title: 'Bahasa Manusia',
+    feat_4_desc: 'Sistem Nutri-Grade (A-D) yang simpel dengan saran yang gampang dimengerti.',
+    
+    faq_title: 'Paling Sering Ditanyain',
+    faq_subtitle: 'Jawaban buat hal-hal yang paling sering bikin penasaran.',
+    faq_1_q: 'Apa itu Nutri-Grade?',
+    faq_1_a: 'Sistem penilaian dari A (Paling Sehat) sampai D (Paling Tidak Sehat) yang dihitung berdasarkan nilai gizi dan mode kesehatan yang kamu pilih.',
+    faq_2_q: 'Apakah analisisnya akurat?',
+    faq_2_a: 'Kami menggunakan AI canggih untuk membaca label, tapi selalu periksa kembali label fisik jika kamu punya alergi parah atau kondisi medis ketat.',
+    faq_3_q: 'Apa bedanya setiap mode?',
+    faq_3_a: 'Setiap mode punya standar ketat yang beda. Misalnya, mode Diabetes akan sangat ketat pada gula, sedangkan mode Fitness fokus pada protein.',
+    faq_4_q: 'Apakah aplikasi ini gratis?',
+    faq_4_a: 'Ya, Nutri Lens sepenuhnya gratis untuk digunakan.',
+    
     // Scan Modes
     mode_normal: 'Mode Normal',
-    mode_normal_desc: 'Analisis kesehatan umum',
     mode_diet: 'Diet / Turun Berat',
-    mode_diet_desc: 'Fokus rendah kalori & tinggi protein',
     mode_diabetes: 'Diabetes',
-    mode_diabetes_desc: 'Fokus rendah gula & karbo kompleks',
     mode_pregnancy: 'Ibu Hamil',
-    mode_pregnancy_desc: 'Bahan aman untuk ibu mengandung',
     mode_breastfeeding: 'Ibu Menyusui',
-    mode_breastfeeding_desc: 'Nutrisi optimal untuk menyusui',
     mode_kids: 'Anak-anak',
-    mode_kids_desc: 'Rendah gula, minim pengawet',
     mode_hypertension: 'Hipertensi',
-    mode_hypertension_desc: 'Fokus rendah natrium/garam',
-    mode_fitness: 'Kebugaran',
-    mode_fitness_desc: 'Tinggi protein, baik untuk pemulihan',
+    mode_fitness: 'Fitness / Otot',
+    
+    mode_desc_normal: 'Panduan kesehatan umum',
+    mode_desc_diet: 'Fokus kalori rendah & tinggi protein',
+    mode_desc_diabetes: 'Fokus gula rendah & karbo kompleks',
+    mode_desc_pregnancy: 'Bahan aman & nutrisi penting',
+    mode_desc_breastfeeding: 'Kalori cukup & bahan aman',
+    mode_desc_kids: 'Rendah gula & minim pengawet',
+    mode_desc_hypertension: 'Sangat rendah natrium/garam',
+    mode_desc_fitness: 'Tinggi protein & baik untuk pemulihan',
     
     // History
     history_title: 'Riwayat',
@@ -177,8 +234,9 @@ export const translations = {
     delete_desc: 'Tindakan ini tidak dapat dibatalkan. Apakah Anda yakin ingin menghapus pindaian ini dari riwayat?',
     cancel: 'Batal',
     delete: 'Hapus',
+    save: 'Simpan',
     
-    // Poster / Result
+    // Poster
     share_title: 'Bagikan Hasil',
     share_text: 'Ambil tangkapan layar untuk membagikan poster ini!',
     scanned_with: 'Dipindai dengan Nutri Lens AI',
@@ -195,10 +253,8 @@ export const translations = {
     share_text_only: 'Bagikan Teks',
     share_text_desc: 'Bagikan teks analisis saja',
     copied_to_clipboard: 'Disalin ke papan klip!',
-    share_error_image: 'Gagal membuat gambar. Coba bagikan teks saja.',
-    share_error_unsupported: 'Fitur berbagi tidak didukung di perangkat ini.',
-    why_this_grade: 'Mengapa grade ini?',
-    recommendation_for_you: 'Rekomendasi',
+    why_this_grade: 'MENGAPA GRADE INI?',
+    recommendation: 'REKOMENDASI',
     
     // Settings
     settings_title: 'Pengaturan',
@@ -210,17 +266,6 @@ export const translations = {
     default_mode_desc: 'Atur tujuan kesehatan utama Anda.',
     about: 'Tentang',
     about_desc: 'Informasi tentang aplikasi Nutri Lens.',
-    guide: 'Panduan Penggunaan',
-    guide_desc: 'Pelajari cara menggunakan Nutri Lens dengan efektif.',
-    
-    // Guide
-    guide_how_to_use: 'Cara Penggunaan',
-    guide_step_1: '1. Pilih tujuan kesehatan Anda pada pemilih Mode Pindai.',
-    guide_step_2: '2. Arahkan kamera ke label Informasi Nilai Gizi atau unggah gambar.',
-    guide_step_3: '3. Tunggu AI menganalisis dan baca wawasan personal Anda.',
-    guide_what_to_scan: 'Apa yang Bisa Dipindai',
-    guide_what_to_scan_desc: 'Pindai tabel Informasi Nilai Gizi standar yang ada di belakang kemasan makanan. Pastikan teks terlihat jelas dan terbaca.',
-    guide_modes_explanation: 'Penjelasan Mode Pindai',
     
     // Theme Options
     theme_system: 'Sistem (default)',
@@ -241,7 +286,10 @@ export const translations = {
     about_version: 'Versi 2.0.0 (Edisi Personal)',
     about_description: 'Nutri Lens adalah Pemindai Nutrisi bertenaga AI yang memanfaatkan Google Gemini API untuk menganalisis label informasi nilai gizi pada kemasan makanan. Aplikasi ini memberikan wawasan kesehatan personal, penilaian Nutri-Grade, dan rekomendasi yang dapat ditindaklanjuti berdasarkan kebutuhan diet dan tujuan kesehatan spesifik Anda.',
     about_tech: 'Ditenagai oleh Google Gemini & React',
-    developer_info: 'Informasi Pengembang',
+    dev_info: 'Informasi Pengembang',
+    dev_name: 'Name',
+    dev_email: 'Email',
+    dev_linkedin: 'LinkedIn',
   }
 };
 
