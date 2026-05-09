@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ScanResult, PosterTheme, NutriGrade, AppLanguage, BilingualText, ScanMode } from '../types.ts';
-import { Share2, Download, Droplets, Flame, Activity, Wheat, Pencil, Check, X, ArrowLeft, Loader2, Image as ImageIcon, Type, Info, ThumbsUp, Trash2 } from 'lucide-react';
+import { Share2, Download, Droplets, Flame, Activity, Wheat, Pencil, Check, X, ArrowLeft, Loader2, Image as ImageIcon, Type, Info, ThumbsUp, Trash2, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import { TranslationKey } from '../utils/i18n.ts';
 import { toBlob } from 'html-to-image';
 import { getModeIcon } from './Scanner.tsx';
@@ -90,7 +90,15 @@ export const Poster: React.FC<PosterProps> = ({ result, theme, onThemeChange, on
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [panPosition, setPanPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   
+  const imageRef = useRef<HTMLImageElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
   const localizedProductName = getLocalizedText(result.productName, language);
   const localizedReasoning = getLocalizedText(result.reasoning, language);
   const localizedRecommendation = getLocalizedText(result.recommendation || {en: '', id: ''}, language);
@@ -183,6 +191,60 @@ export const Poster: React.FC<PosterProps> = ({ result, theme, onThemeChange, on
     setIsEditModalOpen(false);
   };
 
+  // Image Viewer Handlers
+  const handleZoomIn = () => setZoomLevel(prev => Math.min(prev + 0.5, 4));
+  const handleZoomOut = () => {
+    setZoomLevel(prev => {
+      const newZoom = Math.max(prev - 0.5, 1);
+      if (newZoom === 1) setPanPosition({ x: 0, y: 0 });
+      return newZoom;
+    });
+  };
+  const handleResetZoom = () => {
+    setZoomLevel(1);
+    setPanPosition({ x: 0, y: 0 });
+  };
+
+  const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
+    if (zoomLevel === 1) return;
+    setIsDragging(true);
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+    setDragStart({ x: clientX - panPosition.x, y: clientY - panPosition.y });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!isDragging || zoomLevel === 1) return;
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+    
+    // Calculate new position
+    let newX = clientX - dragStart.x;
+    let newY = clientY - dragStart.y;
+
+    // Basic boundary constraints (can be improved for exact image bounds)
+    const maxPan = (zoomLevel - 1) * 200; 
+    newX = Math.max(Math.min(newX, maxPan), -maxPan);
+    newY = Math.max(Math.min(newY, maxPan), -maxPan);
+
+    setPanPosition({ x: newX, y: newY });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  useEffect(() => {
+    if (isImageViewerOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+      handleResetZoom();
+    }
+    return () => { document.body.style.overflow = 'unset'; };
+  }, [isImageViewerOpen]);
+
+
   return (
     <div className="flex flex-col h-full bg-white dark:bg-gray-900 relative w-full">
       {/* Header */}
@@ -244,18 +306,29 @@ export const Poster: React.FC<PosterProps> = ({ result, theme, onThemeChange, on
           className={`w-full max-w-md rounded-2xl overflow-hidden border transition-all duration-300 my-auto shrink-0 ${themeStyles[theme]}`}
         >
           {/* Image Header */}
-          <div className="relative h-56 w-full bg-gray-200">
+          <div className="relative h-56 w-full bg-gray-200 group cursor-pointer" onClick={() => setIsImageViewerOpen(true)}>
             <img 
               src={result.imageUrl} 
               alt={localizedProductName} 
-              className="w-full h-full object-cover opacity-90 mix-blend-multiply"
+              className="w-full h-full object-cover opacity-90 mix-blend-multiply transition-transform duration-500 group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
             
+            {/* View Image Hint */}
+            <div className="absolute top-4 right-4 bg-black/40 backdrop-blur-sm text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+              <Maximize2 size={18} />
+            </div>
+            
             <div className="absolute bottom-4 left-4 right-4">
-              <h3 className="text-2xl font-bold text-white drop-shadow-md line-clamp-2">
-                {localizedProductName}
-              </h3>
+              <div className="flex flex-col gap-1.5">
+                <h3 className="text-2xl font-bold text-white drop-shadow-md truncate">
+                  {localizedProductName}
+                </h3>
+                <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border border-white/30 bg-black/30 backdrop-blur-sm text-white text-[10px] font-medium w-fit">
+                  {getModeIcon(itemMode, 12)}
+                  {t(`mode_${itemMode}` as TranslationKey).toUpperCase()}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -263,15 +336,12 @@ export const Poster: React.FC<PosterProps> = ({ result, theme, onThemeChange, on
           <div className="p-6 space-y-6">
             
             <div className="flex justify-center">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-current opacity-80 text-xs font-medium">
-                {getModeIcon(itemMode, 14)}
-                {t(`mode_${itemMode}` as TranslationKey).toUpperCase()}
-              </div>
-            </div>
-
-            <div className="flex justify-center">
               <NutriGradeGraphic grade={result.grade} />
             </div>
+
+            <p className={`text-sm italic opacity-90 text-justify leading-relaxed ${theme === PosterTheme.Cyber ? 'text-green-300' : ''}`}>
+              "{localizedReasoning}"
+            </p>
 
             <div className="grid grid-cols-2 gap-3">
               <div className={`p-3 rounded-xl flex flex-col items-center justify-center text-center gap-1 ${theme === PosterTheme.Midnight ? 'bg-slate-800/80' : theme === PosterTheme.Cyber ? 'bg-green-900/30 border border-green-800' : 'bg-black/5'}`}>
@@ -352,7 +422,11 @@ export const Poster: React.FC<PosterProps> = ({ result, theme, onThemeChange, on
                 className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-2xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 outline-none"
                 placeholder={t('edit_name')}
                 autoFocus
-                onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSaveEdit();
+                  }
+                }}
               />
               
               <div className="flex gap-3">
@@ -460,10 +534,74 @@ export const Poster: React.FC<PosterProps> = ({ result, theme, onThemeChange, on
         </div>
       )}
 
+      {/* Fullscreen Image Viewer */}
+      {isImageViewerOpen && (
+        <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col animate-[fadeIn_0.2s_ease-out]">
+          <div className="flex justify-between items-center p-4 text-white z-10 bg-gradient-to-b from-black/50 to-transparent">
+            <button 
+              onClick={() => setIsImageViewerOpen(false)}
+              className="p-2 bg-white/10 hover:bg-white/20 rounded-full backdrop-blur-sm transition-colors"
+            >
+              <X size={24} />
+            </button>
+            <div className="flex gap-2">
+              <button 
+                onClick={handleZoomOut}
+                disabled={zoomLevel <= 1}
+                className="p-2 bg-white/10 hover:bg-white/20 rounded-full backdrop-blur-sm transition-colors disabled:opacity-50"
+              >
+                <ZoomOut size={24} />
+              </button>
+              <button 
+                onClick={handleResetZoom}
+                className="px-3 py-2 bg-white/10 hover:bg-white/20 rounded-full backdrop-blur-sm transition-colors text-sm font-medium"
+              >
+                {Math.round(zoomLevel * 100)}%
+              </button>
+              <button 
+                onClick={handleZoomIn}
+                disabled={zoomLevel >= 4}
+                className="p-2 bg-white/10 hover:bg-white/20 rounded-full backdrop-blur-sm transition-colors disabled:opacity-50"
+              >
+                <ZoomIn size={24} />
+              </button>
+            </div>
+          </div>
+          
+          <div 
+            ref={containerRef}
+            className="flex-1 overflow-hidden flex items-center justify-center touch-none"
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            onTouchStart={handleMouseDown}
+            onTouchMove={handleMouseMove}
+            onTouchEnd={handleMouseUp}
+          >
+            <img 
+              ref={imageRef}
+              src={result.imageUrl} 
+              alt={localizedProductName} 
+              className="max-w-full max-h-full object-contain transition-transform duration-100 ease-out"
+              style={{ 
+                transform: `scale(${zoomLevel}) translate(${panPosition.x / zoomLevel}px, ${panPosition.y / zoomLevel}px)`,
+                cursor: zoomLevel > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default'
+              }}
+              draggable={false}
+            />
+          </div>
+        </div>
+      )}
+
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes slideUp {
           from { transform: translateY(100%); }
           to { transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
       `}} />
     </div>
