@@ -5,7 +5,7 @@ import {
   ArrowDown, ArrowUp, Star, Check, X, AlignLeft
 } from 'lucide-react';
 import { TranslationKey } from '../utils/i18n.ts';
-import { modeIcons } from './Scanner.tsx';
+import { getModeIcon } from './Scanner.tsx';
 
 interface HistoryProps {
   history: ScanResult[];
@@ -16,10 +16,10 @@ interface HistoryProps {
 }
 
 const gradeColors: Record<NutriGrade, string> = {
-  [NutriGrade.A]: 'bg-nutri-A text-white border-nutri-A',
-  [NutriGrade.B]: 'bg-nutri-B text-white border-nutri-B',
-  [NutriGrade.C]: 'bg-nutri-C text-white border-nutri-C',
-  [NutriGrade.D]: 'bg-nutri-D text-white border-nutri-D',
+  [NutriGrade.A]: 'bg-nutri-A text-white',
+  [NutriGrade.B]: 'bg-nutri-B text-white',
+  [NutriGrade.C]: 'bg-nutri-C text-white',
+  [NutriGrade.D]: 'bg-nutri-D text-white',
 };
 
 const gradeBorderColors: Record<NutriGrade, string> = {
@@ -29,10 +29,9 @@ const gradeBorderColors: Record<NutriGrade, string> = {
   [NutriGrade.D]: 'border-l-nutri-D',
 };
 
-const getLocalizedText = (text: BilingualText | string | undefined, lang: AppLanguage): string => {
-  if (!text) return '';
+const getLocalizedText = (text: BilingualText | string, lang: AppLanguage): string => {
   if (typeof text === 'string') return text;
-  if (typeof text === 'object') return text[lang] || text.en || '';
+  if (text && typeof text === 'object') return text[lang] || text.en || '';
   return '';
 };
 
@@ -100,7 +99,7 @@ export const History: React.FC<HistoryProps> = ({ history, onSelect, onDelete, t
   }
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900 relative">
+    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900 relative w-full max-w-6xl mx-auto">
       {/* Header */}
       <div className="px-6 pt-8 pb-4 flex justify-between items-start">
         <div>
@@ -138,70 +137,73 @@ export const History: React.FC<HistoryProps> = ({ history, onSelect, onDelete, t
       </div>
 
       {/* List */}
-      <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-4">
-        {filteredAndSortedHistory.map((item) => {
-          const itemMode = item.mode || ScanMode.NORMAL;
-          return (
-            <div 
-              key={item.id} 
-              className={`bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border-l-[6px] ${gradeBorderColors[item.grade]} flex gap-4 cursor-pointer hover:shadow-md transition-shadow relative group`}
-              onClick={() => onSelect(item)}
-            >
-              {/* Image with Delete Overlay */}
-              <div className="w-20 h-20 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700 shrink-0 relative">
-                <img src={item.imageUrl} alt={getLocalizedText(item.productName, language)} className="w-full h-full object-cover" />
-                
-                {/* Delete Overlay Effect */}
-                <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setItemToDelete(item.id);
-                    }}
-                    className="p-2.5 bg-red-500 text-white rounded-full shadow-lg transform hover:scale-110 active:scale-95 transition-all"
-                  >
-                    <Trash2 size={18} />
-                  </button>
+      <div className="flex-1 overflow-y-auto px-6 pb-28 md:pb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {filteredAndSortedHistory.map((item) => {
+            const itemMode = item.mode || ScanMode.Normal;
+            return (
+              <div 
+                key={item.id} 
+                className={`bg-white dark:bg-gray-800 rounded-3xl p-4 shadow-sm border-l-[8px] ${gradeBorderColors[item.grade]} flex gap-4 cursor-pointer hover:shadow-md transition-shadow relative group`}
+                onClick={() => onSelect(item)}
+              >
+                {/* Image with Delete Overlay */}
+                <div className="w-24 h-24 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-700 shrink-0 relative">
+                  <img src={item.imageUrl} alt={getLocalizedText(item.productName, language)} className="w-full h-full object-cover" />
+                  
+                  {/* Delete Overlay Effect */}
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setItemToDelete(item.id);
+                      }}
+                      className="p-2.5 bg-red-500 text-white rounded-full shadow-lg transform hover:scale-110 active:scale-95 transition-all"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
                 </div>
-              </div>
-              
-              {/* Content */}
-              <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
-                <div className="flex justify-between items-start gap-2">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-gray-900 dark:text-white text-base leading-tight line-clamp-2">
-                      {getLocalizedText(item.productName, language)}
-                    </h3>
-                    <div className="flex items-center gap-1 mt-1.5 mb-1">
-                      <span className="flex items-center gap-1 text-[10px] font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded w-fit">
-                        {React.cloneElement(modeIcons[itemMode] as React.ReactElement, { size: 10 })}
-                        {t(`mode_${itemMode}` as TranslationKey)}
+                
+                {/* Content */}
+                <div className="flex-1 min-w-0 flex flex-col justify-between py-1">
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="min-w-0">
+                      <h3 className="font-bold text-gray-900 dark:text-white text-base leading-tight line-clamp-2">
+                        {getLocalizedText(item.productName, language)}
+                      </h3>
+                      <div className="flex items-center gap-1 mt-1.5 bg-gray-100 dark:bg-gray-700 w-fit px-2 py-0.5 rounded-md">
+                        <span className="text-gray-500 dark:text-gray-400">{getModeIcon(itemMode, 12)}</span>
+                        <span className="text-[10px] text-gray-600 dark:text-gray-300 font-medium truncate">
+                          {t(`mode_${itemMode}` as TranslationKey)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 shadow-sm ${gradeColors[item.grade]}`}>
+                      {item.grade}
+                    </div>
+                  </div>
+                  
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium mt-2">
+                    {formatDate(item.timestamp, language)}
+                  </p>
+                  
+                  <div className="flex items-center justify-between mt-2">
+                    <div className="flex gap-2">
+                      <span className="px-2.5 py-1 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-[10px] font-bold rounded-md">
+                        {t('sugar_label')}: {item.facts?.sugar ?? (item as any).sugar ?? 0}g
+                      </span>
+                      <span className="px-2.5 py-1 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-[10px] font-bold rounded-md">
+                        {t('fat_label')}: {item.facts?.saturatedFat ?? (item as any).saturatedFat ?? 0}g
                       </span>
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                      {formatDate(item.timestamp, language)}
-                    </p>
+                    <ChevronRight size={20} className="text-gray-300 dark:text-gray-600" />
                   </div>
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${gradeColors[item.grade]}`}>
-                    {item.grade}
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between mt-2">
-                  <div className="flex gap-2">
-                    <span className="px-2.5 py-1 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-[10px] font-bold rounded-md">
-                      {t('sugar_label')}: {item.facts?.sugar ?? (item as any).sugar ?? 0}g
-                    </span>
-                    <span className="px-2.5 py-1 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-[10px] font-bold rounded-md">
-                      {t('fat_label')}: {item.facts?.saturatedFat ?? (item as any).saturatedFat ?? 0}g
-                    </span>
-                  </div>
-                  <ChevronRight size={18} className="text-gray-400" />
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
         
         {filteredAndSortedHistory.length === 0 && searchQuery && (
           <div className="text-center py-10 text-gray-500 dark:text-gray-400">
@@ -217,8 +219,8 @@ export const History: React.FC<HistoryProps> = ({ history, onSelect, onDelete, t
             className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
             onClick={() => setIsSortModalOpen(false)}
           ></div>
-          <div className="bg-white dark:bg-gray-800 rounded-t-3xl p-6 relative z-10 animate-[slideUp_0.3s_ease-out]">
-            <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-6"></div>
+          <div className="bg-white dark:bg-gray-800 rounded-t-3xl p-6 relative z-10 animate-[slideUp_0.3s_ease-out] md:max-w-md md:mx-auto md:w-full md:mb-auto md:mt-24 md:rounded-3xl">
+            <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-6 md:hidden"></div>
             
             <div className="flex items-center gap-3 mb-6">
               <AlignLeft size={24} className="text-gray-800 dark:text-white" />
@@ -267,8 +269,8 @@ export const History: React.FC<HistoryProps> = ({ history, onSelect, onDelete, t
             className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
             onClick={() => setItemToDelete(null)}
           ></div>
-          <div className="bg-white dark:bg-gray-800 rounded-t-3xl p-6 relative z-10 animate-[slideUp_0.3s_ease-out]">
-            <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-6"></div>
+          <div className="bg-white dark:bg-gray-800 rounded-t-3xl p-6 relative z-10 animate-[slideUp_0.3s_ease-out] md:max-w-md md:mx-auto md:w-full md:mb-auto md:mt-24 md:rounded-3xl">
+            <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-6 md:hidden"></div>
             
             <div className="flex flex-col items-center text-center mb-8">
               <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mb-4">
