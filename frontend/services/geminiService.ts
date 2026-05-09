@@ -42,41 +42,16 @@ export interface GeminiAnalysisResult {
   protein: number;
   fiber: number;
   reasoning: BilingualText;
-  whyThisGrade: BilingualText;
   recommendation: BilingualText;
 }
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-const getModeInstructions = (mode: ScanMode): string => {
-  switch (mode) {
-    case ScanMode.DIET:
-      return "Focus strictly on weight loss. Penalize high calories, high sugar, and low protein. Reward high protein and fiber.";
-    case ScanMode.DIABETES:
-      return "Focus strictly on blood sugar management. Heavily penalize added sugars and simple carbohydrates. Reward high fiber and low glycemic impact.";
-    case ScanMode.PREGNANCY:
-      return "Focus on safety for expecting mothers. Warn about raw ingredients, high sodium, high sugar, and artificial additives. Reward folate, iron, and calcium.";
-    case ScanMode.BREASTFEEDING:
-      return "Focus on optimal nutrition for nursing mothers. Ensure sufficient calories and nutrients. Warn against excessive caffeine or harmful additives.";
-    case ScanMode.KIDS:
-      return "Focus on child health. Heavily penalize high sugar, artificial colors, and preservatives. Reward natural ingredients and essential nutrients for growth.";
-    case ScanMode.HYPERTENSION:
-      return "Focus strictly on heart health and blood pressure. Heavily penalize high sodium and saturated fats.";
-    case ScanMode.FITNESS:
-      return "Focus on muscle gain and recovery. Reward high protein and moderate complex carbs. Penalize empty calories and excessive saturated fats.";
-    case ScanMode.NORMAL:
-    default:
-      return "Provide a general health analysis based on standard WHO nutritional guidelines.";
-  }
-};
 
 export const analyzeNutritionLabel = async (base64Image: string, mimeType: string, mode: ScanMode, retries = 3): Promise<GeminiAnalysisResult> => {
   const ai = getAiClient();
   
   // Remove the data URL prefix (e.g., "data:image/jpeg;base64,")
   const base64Data = base64Image.split(',')[1];
-
-  const modeInstruction = getModeInstructions(mode);
 
   const prompt = `
     Analyze this nutrition facts label. 
@@ -89,17 +64,23 @@ export const analyzeNutritionLabel = async (base64Image: string, mimeType: strin
     6. Protein (g).
     7. Dietary Fiber (g).
     
-    CRITICAL INSTRUCTION: You are evaluating this product specifically for a user in **${mode.toUpperCase()} MODE**.
-    ${modeInstruction}
+    CRITICAL INSTRUCTION: You must evaluate this product strictly based on the dietary guidelines for: ${mode.toUpperCase()} MODE.
+    
+    Mode Guidelines:
+    - NORMAL: General health guidelines (WHO).
+    - DIET: Strictly penalize high calories and low protein. Reward portion-friendly and high protein.
+    - DIABETES: Strictly penalize high sugar and simple carbs. Reward high fiber. Warn about added sugars.
+    - PREGNANCY: Check for safe ingredients. Warn about high sodium or excessive sugars. Highlight essential nutrients if present.
+    - BREASTFEEDING: Ensure sufficient calories and safe ingredients.
+    - KIDS: Strictly penalize high sugar and artificial additives. Reward natural nutrients.
+    - HYPERTENSION: Strictly penalize high sodium/salt.
+    - FITNESS: Reward high protein and recovery-friendly macros. Penalize excessive empty calories.
 
-    Based on these values AND the specific mode profile, calculate a Nutri-Grade (A, B, C, or D) where A is the healthiest and D is the least healthy FOR THIS SPECIFIC PROFILE.
+    Based on the extracted values AND the specific requirements of the ${mode.toUpperCase()} MODE, calculate a Nutri-Grade (A, B, C, or D) where A is the healthiest and D is the least healthy FOR THIS SPECIFIC MODE. 
     
-    Provide:
-    - A short 1-sentence 'reasoning' (insight) for the grade.
-    - A detailed 'whyThisGrade' explaining the specific nutritional factors that led to this grade for this profile.
-    - A 'recommendation' (e.g., "Safe for daily consumption", "Limit to once a week", "Avoid if diabetic").
-    
-    All text outputs MUST be provided in both English and Indonesian.
+    Provide a detailed reasoning (2-3 sentences) explaining WHY it got this grade for this specific user condition.
+    Provide a short recommendation (1 sentence) on how to consume it (e.g., "Avoid during pregnancy", "Safe for daily consumption", "Limit to once a week").
+    Provide both reasoning and recommendation in English and Indonesian.
   `;
 
   let lastError: any;
@@ -123,7 +104,7 @@ export const analyzeNutritionLabel = async (base64Image: string, mimeType: strin
           ],
         },
         config: {
-          systemInstruction: 'You are an expert clinical nutritionist and dietitian. Your task is to analyze an image of a nutrition facts label and extract specific information, evaluating it strictly based on the user\'s specified health profile/mode using evidence-based guidelines (WHO, FDA, ADA, etc.).',
+          systemInstruction: 'You are an expert nutritionist. Your task is to analyze an image of a nutrition facts label and extract specific information, evaluating it based on specific user health conditions.',
           responseMimeType: 'application/json',
           responseSchema: {
             type: Type.OBJECT,
@@ -131,8 +112,8 @@ export const analyzeNutritionLabel = async (base64Image: string, mimeType: strin
               productName: { 
                 type: Type.OBJECT, 
                 properties: {
-                  en: { type: Type.STRING },
-                  id: { type: Type.STRING }
+                  en: { type: Type.STRING, description: "Product name in English" },
+                  id: { type: Type.STRING, description: "Product name in Indonesian" }
                 },
                 required: ["en", "id"]
               },
@@ -146,29 +127,21 @@ export const analyzeNutritionLabel = async (base64Image: string, mimeType: strin
               reasoning: { 
                 type: Type.OBJECT, 
                 properties: {
-                  en: { type: Type.STRING, description: "Short 1-sentence insight" },
-                  id: { type: Type.STRING }
-                },
-                required: ["en", "id"]
-              },
-              whyThisGrade: { 
-                type: Type.OBJECT, 
-                properties: {
-                  en: { type: Type.STRING, description: "Detailed explanation of the grade based on the mode" },
-                  id: { type: Type.STRING }
+                  en: { type: Type.STRING, description: "Detailed reasoning tailored to the selected mode in English" },
+                  id: { type: Type.STRING, description: "Detailed reasoning tailored to the selected mode in Indonesian" }
                 },
                 required: ["en", "id"]
               },
               recommendation: { 
                 type: Type.OBJECT, 
                 properties: {
-                  en: { type: Type.STRING, description: "Actionable advice (e.g., Safe daily, Limit intake)" },
-                  id: { type: Type.STRING }
+                  en: { type: Type.STRING, description: "Short recommendation in English" },
+                  id: { type: Type.STRING, description: "Short recommendation in Indonesian" }
                 },
                 required: ["en", "id"]
               }
             },
-            required: ["productName", "grade", "calories", "sugar", "saturatedFat", "sodium", "protein", "fiber", "reasoning", "whyThisGrade", "recommendation"],
+            required: ["productName", "grade", "calories", "sugar", "saturatedFat", "sodium", "protein", "fiber", "reasoning", "recommendation"],
           },
         },
       });
@@ -192,8 +165,7 @@ export const analyzeNutritionLabel = async (base64Image: string, mimeType: strin
         protein: result.protein || 0,
         fiber: result.fiber || 0,
         reasoning: result.reasoning,
-        whyThisGrade: result.whyThisGrade,
-        recommendation: result.recommendation,
+        recommendation: result.recommendation || { en: "Consume in moderation.", id: "Konsumsi dalam jumlah sedang." },
       };
     } catch (error: any) {
       lastError = error;
