@@ -20,14 +20,14 @@ export interface BilingualText {
 }
 
 export enum ScanMode {
-  NORMAL = 'normal',
-  DIET = 'diet',
-  DIABETES = 'diabetes',
-  PREGNANCY = 'pregnancy',
-  BREASTFEEDING = 'breastfeeding',
-  KIDS = 'kids',
-  HYPERTENSION = 'hypertension',
-  FITNESS = 'fitness'
+  Normal = 'normal',
+  Diet = 'diet',
+  Diabetes = 'diabetes',
+  Pregnancy = 'pregnancy',
+  Breastfeeding = 'breastfeeding',
+  Kids = 'kids',
+  Hypertension = 'hypertension',
+  Fitness = 'fitness'
 }
 
 export interface ScanResult {
@@ -37,10 +37,9 @@ export interface ScanResult {
   grade: NutriGrade;
   facts: NutritionFacts;
   reasoning: BilingualText | string; // string for backward compatibility
-  whyThisGrade?: BilingualText; // Detailed reason based on mode
-  recommendation?: BilingualText; // Actionable advice based on mode
-  mode?: ScanMode; // The mode used during scan
+  recommendation?: BilingualText; // New field for detailed recommendation
   imageUrl: string;
+  mode?: ScanMode; // Optional for backward compatibility with old history
 }
 
 export enum PosterTheme {
