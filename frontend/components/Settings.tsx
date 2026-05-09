@@ -2,43 +2,47 @@ import React, { useState } from 'react';
 import { AppTheme, AppLanguage, ScanMode } from '../types.ts';
 import { 
   Palette, Globe, Info, ChevronRight, ArrowLeft, 
-  Smartphone, Sun, Moon, Circle, CircleDot, Target,
-  User, Mail, Link, BookOpen
+  Smartphone, Sun, Moon, Circle, CircleDot, Activity, User, Mail, Link
 } from 'lucide-react';
 import { TranslationKey } from '../utils/i18n.ts';
 import { Logo } from './Logo.tsx';
-import { modeIcons } from './Scanner.tsx';
+import { getDefaultScanMode, setDefaultScanMode } from '../services/storageService.ts';
+import { getModeIcon } from './Scanner.tsx';
 
-type SettingsView = 'main' | 'theme' | 'language' | 'mode' | 'guide' | 'about';
+type SettingsView = 'main' | 'theme' | 'language' | 'mode' | 'about';
 
 interface SettingsProps {
   theme: AppTheme;
   onThemeChange: (theme: AppTheme) => void;
   language: AppLanguage;
   onLanguageChange: (lang: AppLanguage) => void;
-  defaultMode: ScanMode;
-  onModeChange: (mode: ScanMode) => void;
   t: (key: TranslationKey) => string;
 }
 
 export const Settings: React.FC<SettingsProps> = ({ 
-  theme, onThemeChange, language, onLanguageChange, defaultMode, onModeChange, t 
+  theme, onThemeChange, language, onLanguageChange, t 
 }) => {
   const [currentView, setCurrentView] = useState<SettingsView>('main');
+  const [defaultMode, setDefaultModeState] = useState<ScanMode>(getDefaultScanMode());
+
+  const handleModeChange = (mode: ScanMode) => {
+    setDefaultModeState(mode);
+    setDefaultScanMode(mode);
+  };
 
   const renderMain = () => (
-    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900">
-      <div className="p-4 bg-white dark:bg-gray-800 shadow-sm z-10 sticky top-0">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t('settings_title')}</h2>
+    <div className="flex flex-col h-full bg-white dark:bg-gray-900 w-full max-w-3xl mx-auto">
+      <div className="p-4 bg-white dark:bg-gray-900 z-10 sticky top-0">
+        <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white pt-4 pb-2">{t('settings_title')}</h2>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      <div className="flex-1 overflow-y-auto p-4 pb-28 md:pb-6 space-y-3">
         <button 
           onClick={() => setCurrentView('mode')}
           className="w-full bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-4 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors text-left"
         >
           <div className="w-10 h-10 rounded-full bg-green-50 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400 shrink-0">
-            <Target size={20} />
+            <Activity size={20} />
           </div>
           <div className="flex-1">
             <h3 className="font-bold text-gray-900 dark:text-white">{t('default_mode')}</h3>
@@ -76,20 +80,6 @@ export const Settings: React.FC<SettingsProps> = ({
         </button>
 
         <button 
-          onClick={() => setCurrentView('guide')}
-          className="w-full bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-4 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors text-left"
-        >
-          <div className="w-10 h-10 rounded-full bg-green-50 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400 shrink-0">
-            <BookOpen size={20} />
-          </div>
-          <div className="flex-1">
-            <h3 className="font-bold text-gray-900 dark:text-white">{t('guide')}</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{t('guide_desc')}</p>
-          </div>
-          <ChevronRight size={20} className="text-gray-400" />
-        </button>
-
-        <button 
           onClick={() => setCurrentView('about')}
           className="w-full bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-4 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors text-left"
         >
@@ -107,10 +97,10 @@ export const Settings: React.FC<SettingsProps> = ({
   );
 
   const renderHeader = (title: string) => (
-    <div className="flex items-center gap-3 p-4 bg-white dark:bg-gray-800 shadow-sm z-10 sticky top-0">
+    <div className="flex items-center gap-3 p-4 bg-white dark:bg-gray-900 z-10 sticky top-0 pt-8">
       <button 
         onClick={() => setCurrentView('main')}
-        className="p-2 -ml-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+        className="p-2 -ml-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
       >
         <ArrowLeft size={24} />
       </button>
@@ -157,18 +147,18 @@ export const Settings: React.FC<SettingsProps> = ({
   );
 
   const renderMode = () => (
-    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900">
+    <div className="flex flex-col h-full bg-white dark:bg-gray-900 w-full max-w-3xl mx-auto">
       {renderHeader(t('default_mode'))}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 pb-28 md:pb-6 space-y-4">
         <p className="text-gray-600 dark:text-gray-400 mb-2">{t('default_mode_desc')}</p>
         
         {Object.values(ScanMode).map((mode) => (
           renderOptionItem(
             defaultMode === mode,
-            () => onModeChange(mode),
-            modeIcons[mode],
+            () => handleModeChange(mode),
+            getModeIcon(mode),
             t(`mode_${mode}` as TranslationKey),
-            t(`mode_${mode}_desc` as TranslationKey)
+            t(`mode_desc_${mode}` as TranslationKey)
           )
         ))}
       </div>
@@ -176,9 +166,9 @@ export const Settings: React.FC<SettingsProps> = ({
   );
 
   const renderTheme = () => (
-    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900">
+    <div className="flex flex-col h-full bg-white dark:bg-gray-900 w-full max-w-3xl mx-auto">
       {renderHeader(t('theme'))}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 pb-28 md:pb-6 space-y-4">
         <p className="text-gray-600 dark:text-gray-400 mb-2">{t('theme_desc')}</p>
         
         {renderOptionItem(
@@ -209,9 +199,9 @@ export const Settings: React.FC<SettingsProps> = ({
   );
 
   const renderLanguage = () => (
-    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900">
+    <div className="flex flex-col h-full bg-white dark:bg-gray-900 w-full max-w-3xl mx-auto">
       {renderHeader(t('language'))}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 pb-28 md:pb-6 space-y-4">
         <p className="text-gray-600 dark:text-gray-400 mb-2">{t('language_desc')}</p>
         
         {renderOptionItem(
@@ -233,102 +223,43 @@ export const Settings: React.FC<SettingsProps> = ({
     </div>
   );
 
-  const renderGuide = () => (
-    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900">
-      {renderHeader(t('guide'))}
-      <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-12">
-        
-        {/* How to Use */}
-        <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
-          <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-4 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">1</div>
-            {t('guide_how_to_use')}
-          </h3>
-          <div className="space-y-3 text-sm text-gray-600 dark:text-gray-300 ml-11">
-            <p>{t('guide_step_1')}</p>
-            <p>{t('guide_step_2')}</p>
-            <p>{t('guide_step_3')}</p>
-          </div>
-        </div>
-
-        {/* What to Scan */}
-        <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
-          <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-3 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 flex items-center justify-center shrink-0">2</div>
-            {t('guide_what_to_scan')}
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 ml-11">
-            {t('guide_what_to_scan_desc')}
-          </p>
-          <div className="ml-11 rounded-xl overflow-hidden border-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700">
-            {/* Using a generic placeholder image as requested */}
-            <img src="https://picsum.photos/400/300?grayscale&blur=2" alt="Nutrition Label Example" className="w-full h-auto object-cover opacity-80" />
-            <div className="p-2 text-center text-xs text-gray-500 dark:text-gray-400 font-medium">
-              Example: Nutrition Facts Table
-            </div>
-          </div>
-        </div>
-
-        {/* Modes Explanation */}
-        <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
-          <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-5 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">3</div>
-            {t('guide_modes_explanation')}
-          </h3>
-          <div className="space-y-5 ml-11">
-            {Object.values(ScanMode).map((mode) => (
-              <div key={mode} className="flex gap-3 items-start">
-                <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 flex items-center justify-center shrink-0 mt-0.5">
-                  {modeIcons[mode]}
-                </div>
-                <div>
-                  <h4 className="font-bold text-sm text-gray-900 dark:text-white">{t(`mode_${mode}` as TranslationKey)}</h4>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">{t(`mode_${mode}_desc` as TranslationKey)}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-      </div>
-    </div>
-  );
-
   const renderAbout = () => (
-    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900">
+    <div className="flex flex-col h-full bg-white dark:bg-gray-900 w-full max-w-3xl mx-auto">
       {renderHeader(t('about'))}
-      <div className="flex-1 overflow-y-auto p-6 flex flex-col items-center text-center">
+      <div className="flex-1 overflow-y-auto p-6 pb-28 md:pb-6 flex flex-col items-center text-center">
         <Logo className="w-24 h-24 mb-6 shadow-sm rounded-3xl" />
         <h3 className="text-2xl font-extrabold text-gray-900 dark:text-white mb-1">{t('about_app_name')}</h3>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 font-medium">{t('about_version')}</p>
         
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 mb-6 w-full">
-          <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+        <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 mb-6 w-full">
+          <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm">
             {t('about_description')}
           </p>
         </div>
 
-        {/* Developer Info Section */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 mb-8 text-left w-full">
-          <h4 className="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-            <User size={18} className="text-green-600 dark:text-green-400" />
-            {t('developer_info')}
-          </h4>
+        <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 mb-8 w-full text-left">
+          <div className="flex items-center gap-2 mb-4">
+            <User size={20} className="text-green-600 dark:text-green-400" />
+            <h4 className="font-bold text-gray-900 dark:text-white">{t('dev_info')}</h4>
+          </div>
+          
           <div className="space-y-4">
             <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Name</p>
-              <p className="text-sm font-medium text-gray-900 dark:text-white">Gusti Ngurah Mertayasa</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{t('dev_name')}</p>
+              <p className="font-medium text-gray-900 dark:text-white">Gusti Ngurah Mertayasa</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Email</p>
-              <a href="mailto:gusti.ngurah.mertayasa@gmail.com" className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1.5">
-                <Mail size={14} /> gusti.ngurah.mertayasa@gmail.com
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{t('dev_email')}</p>
+              <a href="mailto:gusti.ngurah.mertayasa@gmail.com" className="flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:underline">
+                <Mail size={16} />
+                <span className="text-sm">gusti.ngurah.mertayasa@gmail.com</span>
               </a>
             </div>
             <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">LinkedIn</p>
-              <a href="https://www.linkedin.com/in/gusti-ngurah-mertayasa" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1.5 break-all">
-                <Link size={14} className="shrink-0" /> gusti-ngurah-mertayasa
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{t('dev_linkedin')}</p>
+              <a href="https://linkedin.com/in/gusti-ngurah-mertayasa" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:underline">
+                <Link size={16} />
+                <span className="text-sm">gusti-ngurah-mertayasa</span>
               </a>
             </div>
           </div>
@@ -345,7 +276,6 @@ export const Settings: React.FC<SettingsProps> = ({
     case 'mode': return renderMode();
     case 'theme': return renderTheme();
     case 'language': return renderLanguage();
-    case 'guide': return renderGuide();
     case 'about': return renderAbout();
     default: return renderMain();
   }
